@@ -19,17 +19,18 @@ background:#fff;padding:12px 15px;display:flex;
 align-items:center;gap:10px;
 position:sticky;top:0;border-bottom:1px solid #eee;z-index:10
 }
-.header img{width:36px;height:36px;border-radius:10px}
+.header img{width:36px;height:36px;border-radius:10px;object-fit:cover}
 .header h3{margin:0;font-size:18px}
 
 /* BANNER */
 .banner{height:200px;background:#333;overflow:hidden}
 .banner img{width:100%;height:100%;object-fit:cover}
 
-/* STORE */
+/* STORE DESC */
 .store-desc{
 background:#fff;margin:15px;padding:15px;
-border-radius:20px;font-size:14px;color:#444
+border-radius:20px;font-size:14px;color:#444;
+line-height:1.5
 }
 
 /* ADMIN */
@@ -43,26 +44,24 @@ border-radius:10px;border:1px solid #ddd
 /* PRODUCTS */
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;padding:15px}
 .card{background:#fff;border-radius:20px;overflow:hidden;
-box-shadow:0 4px 10px rgba(0,0,0,.05);position:relative}
-.card img{width:100%;height:150px;object-fit:cover}
+box-shadow:0 4px 10px rgba(0,0,0,.05)}
+.card img{width:100%;height:150px;object-fit:cover;background:#eee}
 .info{padding:10px;text-align:center}
-.name{font-weight:600}
-.desc{font-size:12px;color:#666;height:32px;overflow:hidden}
-.price{color:var(--blue);font-weight:800}
+.name{font-weight:600;font-size:14px}
+.desc{font-size:12px;color:#666;margin:4px 0;height:32px;overflow:hidden}
+.price{color:#007AFF;font-weight:800}
+.stock,.cat{font-size:12px;color:#8E8E93}
 
 /* BUTTON */
 button{border:none;border-radius:12px;padding:10px;font-weight:700;cursor:pointer}
-.buy{background:var(--green);color:#fff;width:100%;margin-top:5px}
-.cart{background:#f2f2f7;color:var(--blue);width:100%;margin-top:5px}
-.delete{
-background:var(--red);color:#fff;
-width:100%;margin-top:5px
-}
+.buy{background:#34C759;color:#fff;width:100%;margin-top:5px}
+.cart{background:#f2f2f7;color:#007AFF;width:100%;margin-top:5px}
+.delete{background:#FF3B30;color:#fff;width:100%;margin-top:5px}
 
 /* CART */
 #cartBar{
 position:fixed;bottom:20px;left:15px;right:15px;
-background:var(--green);color:#fff;padding:15px;
+background:#34C759;color:#fff;padding:15px;
 border-radius:20px;display:none;
 justify-content:space-between;font-weight:800
 }
@@ -71,22 +70,26 @@ justify-content:space-between;font-weight:800
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
 <img id="logoImg" style="display:none">
 <h3 id="storeName">Petasan Jaya 🎆</h3>
 <button onclick="loginAdmin()" style="margin-left:auto">🔒</button>
 </div>
 
+<!-- BANNER -->
 <div class="banner">
 <img id="bannerImg" style="display:none">
 </div>
 
+<!-- DESKRIPSI TOKO -->
 <div class="store-desc" id="storeDesc">
 Menjual petasan & kembang api berkualitas, aman, dan terpercaya.
 </div>
 
+<!-- ADMIN PANEL -->
 <div class="admin admin-only">
-<h3>🛠️ Admin</h3>
+<h3>🛠️ Admin Toko</h3>
 
 <input id="storeNameInput" placeholder="Nama Toko">
 <textarea id="storeDescInput" placeholder="Deskripsi Toko"></textarea>
@@ -95,7 +98,7 @@ Menjual petasan & kembang api berkualitas, aman, dan terpercaya.
 <input type="file" accept="image/*" onchange="uploadBanner(event)">
 
 <button onclick="saveStore()" style="background:#007AFF;color:#fff">
-Simpan Profil
+Simpan Profil Toko
 </button>
 
 <hr>
@@ -116,64 +119,60 @@ Simpan Profil
 <input type="file" id="pImg" accept="image/*">
 
 <button onclick="addProduct()" style="background:#34C759;color:#fff">
-Simpan Produk
+Tambah Produk
 </button>
 </div>
 
+<!-- PRODUCT LIST -->
 <div class="grid" id="list"></div>
 
+<!-- CART BAR -->
 <div id="cartBar" onclick="checkoutWA()">
 <span id="cartText">🧾 0 Item</span>
 <span>Checkout ➜</span>
 </div>
 
 <script>
-const KEY="PETASAN_STORE_DELETE";
-const WA="6285697334082";
-const ADMIN_PASS="martin123";
+const KEY="PETASAN_STORE_V3";
+const WA="6281234567890"; // GANTI NO WA
+const ADMIN_PASS="petasan123";
 
 let db={
 store:{name:"Petasan Jaya 🎆",desc:"Menjual petasan & kembang api berkualitas, aman, dan terpercaya.",logo:"",banner:""},
 products:[]
 };
-let cart={},admin=false;
+let admin=false,cart={};
 
-/* STORAGE */
-function save(){
-try{localStorage.setItem(KEY,JSON.stringify(db));}
-catch(e){alert("❌ Memori penuh! Gunakan gambar < 500KB");}
-}
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
 function load(){
 const d=localStorage.getItem(KEY);
 if(d) db=JSON.parse(d);
 applyStore();render();
 }
 
-/* ADMIN */
 function loginAdmin(){
 if(prompt("Password Admin")!==ADMIN_PASS) return alert("Password salah");
 admin=!admin;
 document.querySelectorAll(".admin-only")
 .forEach(e=>e.style.display=admin?"block":"none");
-render();
 storeNameInput.value=db.store.name;
 storeDescInput.value=db.store.desc;
+render();
 }
 
-/* STORE */
 function applyStore(){
 storeName.innerText=db.store.name;
 storeDesc.innerText=db.store.desc;
 if(db.store.logo){logoImg.src=db.store.logo;logoImg.style.display="block";}
 if(db.store.banner){bannerImg.src=db.store.banner;bannerImg.style.display="block";}
 }
+
 function saveStore(){
 db.store.name=storeNameInput.value;
 db.store.desc=storeDescInput.value;
 save();applyStore();
 }
 
-/* UPLOAD */
 function uploadLogo(e){
 const r=new FileReader();
 r.onload=()=>{db.store.logo=r.result;save();applyStore()}
@@ -185,15 +184,7 @@ r.onload=()=>{db.store.banner=r.result;save();applyStore()}
 r.readAsDataURL(e.target.files[0]);
 }
 
-/* PRODUCT */
 function addProduct(){
-const f=pImg.files[0];
-if(!pName.value||!pDesc.value||!pPrice.value||!pStock.value||!pCat.value||!f)
-return alert("Lengkapi data");
-
-if(f.size>500000)
-return alert("❌ Gambar maksimal 500KB");
-
 const r=new FileReader();
 r.onload=()=>{
 db.products.push({
@@ -206,47 +197,38 @@ cat:pCat.value,
 img:r.result
 });
 save();render();
-pName.value=pDesc.value=pPrice.value=pStock.value="";
-pCat.value="";pImg.value="";
-alert("✅ Produk disimpan");
 };
-r.readAsDataURL(f);
+r.readAsDataURL(pImg.files[0]);
 }
 
-/* DELETE PRODUCT */
 function deleteProduct(id){
-if(!admin) return;
-if(!confirm("❗ Hapus produk ini?")) return;
+if(!confirm("Hapus produk ini?")) return;
 db.products=db.products.filter(p=>p.id!==id);
 save();render();
 }
 
-/* CART */
 function addCart(id){
 cart[id]=(cart[id]||0)+1;
+updateCart();
+}
+function updateCart(){
 let t=Object.values(cart).reduce((a,b)=>a+b,0);
 cartBar.style.display=t?"flex":"none";
 cartText.innerText=`🧾 ${t} Item`;
 }
 
-/* WA */
-function buyNow(id){
-const p=db.products.find(x=>x.id===id);
-open(`https://wa.me/${WA}?text=`+
-encodeURIComponent(`Halo, saya mau beli:\n${p.name}\nRp ${p.price.toLocaleString()}`));
-}
 function checkoutWA(){
 let msg="Halo, saya pesan:\n",total=0;
 for(let id in cart){
 const p=db.products.find(x=>x.id==id);
-total+=p.price*cart[id];
-msg+=`- ${p.name} (${cart[id]}x)\n`;
+const sub=p.price*cart[id];
+total+=sub;
+msg+=`- ${p.name} (${cart[id]}x) Rp ${sub.toLocaleString()}\n`;
 }
 msg+=`\nTotal: Rp ${total.toLocaleString()}`;
 open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`);
 }
 
-/* RENDER */
 function render(){
 list.innerHTML=db.products.map(p=>`
 <div class="card">
@@ -254,12 +236,15 @@ list.innerHTML=db.products.map(p=>`
 <div class="info">
 <div class="name">${p.name}</div>
 <div class="desc">${p.desc}</div>
+<div class="cat">${p.cat}</div>
 <div class="price">Rp ${p.price.toLocaleString()}</div>
-<button class="buy" onclick="buyNow(${p.id})">Beli WA</button>
+<div class="stock">Stok: ${p.stock}</div>
+<button class="buy" onclick='checkoutWA()'>Beli via WA</button>
 <button class="cart" onclick="addCart(${p.id})">+ Keranjang</button>
 ${admin?`<button class="delete" onclick="deleteProduct(${p.id})">🗑️ Hapus</button>`:""}
 </div>
-</div>`).join("");
+</div>
+`).join("");
 }
 
 window.onload=load;
